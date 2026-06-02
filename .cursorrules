@@ -1,0 +1,28 @@
+# MCAT Prep - Cursor Rules
+
+## Architecture
+- Local-first: all practice, analytics, and exam flows must work offline via RxDB (Dexie/IndexedDB).
+- Cloud is optional: Supabase sync only when authenticated and online.
+- Feature-driven layout under `src/features/{dashboard,exam-emulator,flashcards,compliance}`.
+- Shared UI atoms in `src/components`.
+
+## Code Style
+- TypeScript strict mode; no `any` without justification.
+- React function components + hooks; prefer colocated feature modules.
+- Tailwind for styling; Pearson VUE exam UI uses fixed layout tokens in `exam-emulator/styles.ts`.
+
+## Performance
+- Local AI runs in a Web Worker; never block the main thread during inference.
+- Target 60 FPS during WebGPU model execution.
+
+## Compliance ("Guarantee Mode")
+- Incorrect answers trigger modal blockade when mode is active.
+- `infoGap`, `distractorTrap`, `preventiveRule` must be non-empty before continue.
+- Persist to `question_logs.mistakeAnalysis` with `complianceLogged: true`.
+
+## FSRS
+- Interval: I(s, r) = s * ln(r) / ln(0.9), default r = 0.9.
+- Overdue flashcards > 200 blocks new practice passage routing.
+
+## Testing
+- Vitest for unit/integration tests; verify offline persistence and FSRS math.
