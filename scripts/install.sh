@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # MCAT Prep one-liner (Unix / macOS / Linux):
-#   curl -fsSL https://raw.githubusercontent.com/YOUR_ORG/mcatprep/main/scripts/install.sh | bash
+#   git clone https://github.com/mamoonk/omnimcatprep.git && cd omnimcatprep && ./scripts/install.sh
 # From repo root:
 #   ./scripts/install.sh
 set -euo pipefail

@@ -14,6 +14,13 @@ export interface ProviderModel {
   note?: string;
 }
 
+/** Extended metadata for OpenRouter catalog entries */
+export interface OpenRouterModel extends ProviderModel {
+  /** Slug before `/` in the model id (e.g. `openai`) */
+  org: string;
+  isFree: boolean;
+}
+
 export interface AiProviderDefinition {
   id: ProviderId;
   label: string;

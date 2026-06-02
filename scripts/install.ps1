@@ -1,5 +1,5 @@
 # MCAT Prep one-liner (Windows PowerShell):
-#   irm https://raw.githubusercontent.com/YOUR_ORG/mcatprep/main/scripts/install.ps1 | iex
+#   git clone https://github.com/mamoonk/omnimcatprep.git; cd omnimcatprep; .\scripts\install.ps1
 # From repo root:
 #   .\scripts\install.ps1
 $ErrorActionPreference = "Stop"

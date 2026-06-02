@@ -1,11 +1,25 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AI_PROVIDERS, getProvider, isOnlineProvider } from "./providers/catalog";
 import {
   hasProviderCredential,
   maskCredential,
   getProviderCredential,
 } from "./providers/credentials";
-import type { AiProviderDefinition, AiSelection, ProviderId } from "./providers/types";
+import {
+  fetchOpenRouterModels,
+  readOpenRouterModelCache,
+} from "./providers/openRouterModels";
+import { filterOpenRouterModels } from "./providers/openRouterFilters";
+import type {
+  AiProviderDefinition,
+  AiSelection,
+  OpenRouterModel,
+  ProviderId,
+} from "./providers/types";
+import {
+  OpenRouterModelFiltersPanel,
+  useOpenRouterFiltersState,
+} from "./OpenRouterModelFiltersPanel";
 import { getAiSelection, setAiSelection } from "./aiPreferences";
 import { isValidModelId, normalizeModelId } from "./modelCatalog";
 import { Button } from "../components/Button";
@@ -45,8 +59,30 @@ export function ProviderModelSelector({
   const [savedNotice, setSavedNotice] = useState(false);
   const [credentialDialogProvider, setCredentialDialogProvider] =
     useState<AiProviderDefinition | null>(null);
+  const [credentialRev, setCredentialRev] = useState(0);
+  const [openRouterModels, setOpenRouterModels] = useState<OpenRouterModel[] | null>(
+    () => readOpenRouterModelCache(),
+  );
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+  const [openRouterFilters, setOpenRouterFilters] = useOpenRouterFiltersState();
 
   const provider = useMemo(() => getProvider(providerId), [providerId]);
+
+  const catalogModels = useMemo(() => {
+    if (providerId === "openrouter" && openRouterModels?.length) {
+      return openRouterModels;
+    }
+    return provider.models;
+  }, [providerId, provider.models, openRouterModels]);
+
+  const filteredModels = useMemo(() => {
+    if (providerId === "openrouter" && openRouterModels?.length) {
+      return filterOpenRouterModels(openRouterModels, openRouterFilters);
+    }
+    return catalogModels;
+  }, [providerId, openRouterModels, openRouterFilters, catalogModels]);
+
   const draftModelId =
     modelMode === "custom" && provider.allowCustomModel
       ? normalizeModelId(customModelId)
@@ -58,7 +94,7 @@ export function ProviderModelSelector({
       : Boolean(draftModelId) &&
         (modelMode === "custom" && provider.allowCustomModel
           ? draftModelId.length >= 2
-          : provider.models.some((m) => m.id === draftModelId));
+          : catalogModels.some((m) => m.id === draftModelId));
 
   const draftSelection: AiSelection = { providerId, modelId: draftModelId };
   const hasUnsavedChanges =
@@ -71,6 +107,42 @@ export function ProviderModelSelector({
   const needsLocalReload =
     savedSelection.providerId === "local" &&
     Boolean(loadedLocalModelId && loadedLocalModelId !== savedSelection.modelId);
+
+  const loadOpenRouterModels = useCallback(async (forceRefresh = false) => {
+    setModelsLoading(true);
+    setModelsError(null);
+    try {
+      const apiKey = getProviderCredential("openrouter") ?? undefined;
+      const models = await fetchOpenRouterModels(apiKey, { forceRefresh });
+      setOpenRouterModels(models);
+      if (!models.some((m) => m.id === presetModelId)) {
+        setPresetModelId(models[0]?.id ?? presetModelId);
+        setModelMode("preset");
+      }
+    } catch (err) {
+      setModelsError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setModelsLoading(false);
+    }
+  }, [presetModelId]);
+
+  useEffect(() => {
+    if (providerId !== "openrouter" || modelMode !== "preset") return;
+    if (filteredModels.length === 0) return;
+    if (!filteredModels.some((m) => m.id === presetModelId)) {
+      setPresetModelId(filteredModels[0].id);
+    }
+  }, [providerId, modelMode, filteredModels, presetModelId]);
+
+  useEffect(() => {
+    if (providerId !== "openrouter") return;
+    if (!hasProviderCredential("openrouter")) {
+      setOpenRouterModels(null);
+      setModelsError(null);
+      return;
+    }
+    void loadOpenRouterModels(false);
+  }, [providerId, credentialRev, loadOpenRouterModels]);
 
   const openCredentialDialog = (target: AiProviderDefinition) => {
     setCredentialDialogProvider(target);
@@ -107,6 +179,14 @@ export function ProviderModelSelector({
     }
   };
 
+  const handleCredentialSaved = () => {
+    setCredentialDialogProvider(null);
+    setCredentialRev((v) => v + 1);
+    if (credentialDialogProvider?.id === "openrouter") {
+      void loadOpenRouterModels(true);
+    }
+  };
+
   return (
     <>
       <div className={compact ? "space-y-3" : "space-y-4"}>
@@ -127,13 +207,55 @@ export function ProviderModelSelector({
               </option>
             ))}
           </select>
-          <p className="mt-1.5 text-xs text-slate-500">{provider.description}</p>
+          <p className="mt-1.5 text-xs text-slate-500">
+            {providerId === "openrouter" && credentialConfigured
+              ? "Full OpenRouter catalog loads after your API key is saved."
+              : provider.description}
+          </p>
         </div>
 
         <div>
-          <label htmlFor="ai-model" className="text-sm font-medium text-slate-700">
-            Model
-          </label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label htmlFor="ai-model" className="text-sm font-medium text-slate-700">
+              Model
+            </label>
+            {providerId === "openrouter" && credentialConfigured && (
+              <button
+                type="button"
+                onClick={() => void loadOpenRouterModels(true)}
+                disabled={modelsLoading}
+                className="text-xs font-medium text-[#3399ff] hover:underline disabled:opacity-50"
+              >
+                {modelsLoading ? "Loading…" : "Refresh catalog"}
+              </button>
+            )}
+          </div>
+
+          {providerId === "openrouter" && credentialConfigured && openRouterModels && (
+            <OpenRouterModelFiltersPanel
+              models={openRouterModels}
+              filters={openRouterFilters}
+              onChange={setOpenRouterFilters}
+              loading={modelsLoading}
+            />
+          )}
+
+          {providerId === "openrouter" && !credentialConfigured && (
+            <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+              Save your OpenRouter API key below to load the full model catalog (300+ models).
+            </p>
+          )}
+
+          {modelsLoading && providerId === "openrouter" && (
+            <p className="mt-2 text-xs text-slate-500">Fetching models from OpenRouter…</p>
+          )}
+
+          {modelsError && providerId === "openrouter" && (
+            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              {modelsError} Showing built-in shortcuts. Use Custom model id or try Refresh catalog.
+            </p>
+          )}
+
           <select
             id="ai-model"
             value={modelMode === "custom" ? CUSTOM_VALUE : presetModelId}
@@ -148,9 +270,16 @@ export function ProviderModelSelector({
               }
               setSavedNotice(false);
             }}
-            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#3399ff] focus:outline-none focus:ring-2 focus:ring-[#3399ff]/20"
+            disabled={
+              (providerId === "openrouter" && modelsLoading) ||
+              (providerId === "openrouter" && filteredModels.length === 0 && modelMode === "preset")
+            }
+            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#3399ff] focus:outline-none focus:ring-2 focus:ring-[#3399ff]/20 disabled:opacity-60"
           >
-            {provider.models.map((model) => (
+            {(providerId === "openrouter" && credentialConfigured && openRouterModels
+              ? filteredModels
+              : provider.models
+            ).map((model) => (
               <option key={model.id} value={model.id}>
                 {model.label}
                 {model.note ? ` (${model.note})` : ""}
@@ -248,7 +377,7 @@ export function ProviderModelSelector({
           open
           provider={credentialDialogProvider}
           onClose={() => setCredentialDialogProvider(null)}
-          onSaved={() => setCredentialDialogProvider(null)}
+          onSaved={handleCredentialSaved}
         />
       )}
     </>

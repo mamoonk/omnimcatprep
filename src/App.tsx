@@ -10,6 +10,7 @@ import { useAi } from "./local-ai/useAi";
 import { AiActivityPanel } from "./local-ai/AiActivityPanel";
 import { PdfClozeUpload } from "./local-ai/PdfClozeUpload";
 import { ApiKeyDialog } from "./local-ai/ApiKeyDialog";
+import { FreeAiOptionsCatalog } from "./local-ai/FreeAiOptionsCatalog";
 import { ProviderModelSelector } from "./local-ai/ProviderModelSelector";
 import { getDatabase, seedMockData } from "./database";
 import { useSupabaseAuth } from "./database/supabase-sync/useAuth";
@@ -226,6 +227,8 @@ function AiPage() {
     selection,
   } = useAi();
 
+  const [selectorKey, setSelectorKey] = useState(0);
+
   const canLoad = isLocal && !loadingModel && (!ready || modelMismatch);
   const canGenerate = isLocal ? !loading : hasCredential && !loading;
 
@@ -233,18 +236,25 @@ function AiPage() {
     <div className="mx-auto max-w-2xl">
       <PageHeader
         title="AI Tutor"
-        subtitle="Run models locally offline or connect online providers with your own API key."
+        subtitle="Start with the free catalog below — no API key needed for local models."
+      />
+
+      <FreeAiOptionsCatalog
+        onSelectionApplied={() => {
+          refreshSelection();
+          setSelectorKey((k) => k + 1);
+        }}
       />
 
       <Card hover={false} className="mb-6 space-y-4">
         <div>
           <h3 className="font-semibold text-[#003366]">Provider &amp; model</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Choose local WebGPU inference or an online provider. Online providers prompt for an API
-            key or token when selected.
+            Fine-tune your choice, add API keys for online providers, or switch anytime.
           </p>
         </div>
         <ProviderModelSelector
+          key={selectorKey}
           loadedLocalModelId={loadedModelId}
           onSelectionSaved={() => refreshSelection()}
         />

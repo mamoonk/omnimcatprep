@@ -81,7 +81,8 @@ export const AI_PROVIDERS: AiProviderDefinition[] = [
   {
     id: "openrouter",
     label: "OpenRouter",
-    description: "Unified API for many hosted models.",
+    description:
+      "Unified API for 300+ hosted models. Save your API key to load the full catalog from OpenRouter.",
     mode: "online",
     requiresCredential: true,
     credentialLabel: "API Key",
