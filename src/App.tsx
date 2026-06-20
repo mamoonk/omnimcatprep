@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { Button } from "./components/Button";
 import { Dashboard } from "./features/dashboard/Dashboard";
 import { PearsonVueExam } from "./features/exam-emulator/PearsonVueExam";
+import { ExamLaunch } from "./features/exam-emulator/ExamLaunch";
 import { FlashcardReview } from "./features/flashcards/FlashcardReview";
 import { useOverdueGuard } from "./features/flashcards/useOverdueGuard";
 import { useAi } from "./local-ai/useAi";
@@ -14,7 +15,15 @@ import { FreeAiOptionsCatalog } from "./local-ai/FreeAiOptionsCatalog";
 import { ProviderModelSelector } from "./local-ai/ProviderModelSelector";
 import { getDatabase, seedMockData } from "./database";
 import { useSupabaseAuth } from "./database/supabase-sync/useAuth";
+import type { ExamQuestion, McatSection } from "./types";
+import type { Question } from "./types/question";
+import type { Passage } from "./types/passage";
 import { Help } from "./features/help/Help";
+import { LessonsHome } from "./features/lessons/LessonsHome";
+import { LessonReader } from "./features/lessons/LessonReader";
+import { QuestionBank } from "./features/question-bank/QuestionBank";
+import { QuestionPlayer } from "./features/question-bank/QuestionPlayer";
+import { toExamQuestion, buildPassageMap } from "./features/exam-emulator/questionAdapter";
 import { PageHeader } from "./components/PageHeader";
 import { Card } from "./components/Card";
 import { QuickAction } from "./components/QuickAction";
@@ -88,6 +97,20 @@ function HomePage() {
           delay={100}
         />
         <QuickAction
+          to="/practice"
+          icon="🎯"
+          title="Practice Questions"
+          description="Custom practice sets by topic, difficulty, and format"
+          delay={130}
+        />
+        <QuickAction
+          to="/lessons"
+          icon="📖"
+          title="Content Review"
+          description="MCAT lessons organized by AAMC content category"
+          delay={140}
+        />
+        <QuickAction
           to="/dashboard"
           icon="📊"
           title="View Analytics"
@@ -152,7 +175,9 @@ function HomePage() {
 
 function ExamPage() {
   const { blocked } = useOverdueGuard();
+  const [startedSection, setStartedSection] = useState<McatSection | null>(null);
   const [guaranteeMode, setGuaranteeMode] = useState(false);
+  const [allExamQuestions, setAllExamQuestions] = useState<ExamQuestion[]>([]);
   const {
     generate,
     result,
@@ -166,15 +191,50 @@ function ExamPage() {
     provider,
   } = useAi();
 
+  useEffect(() => {
+    let cancelled = false;
+    void getDatabase().then(async (db) => {
+      const [qDocs, pDocs] = await Promise.all([
+        db.questions.find().exec(),
+        db.passages.find().exec(),
+      ]);
+      if (cancelled) return;
+      const questions = qDocs.map((d) => d.toJSON() as unknown as Question);
+      const passages = pDocs.map((d) => d.toJSON() as unknown as Passage);
+      const pm = buildPassageMap(passages);
+      const mapped = questions.map((q) => toExamQuestion(q, pm));
+      setAllExamQuestions(mapped);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleStart = useCallback(
+    (section: McatSection) => {
+      setStartedSection(section);
+    },
+    [],
+  );
+
   if (blocked) {
     return <Navigate to="/flashcards" replace />;
   }
+
+  if (!startedSection) {
+    return <ExamLaunch onStart={handleStart} />;
+  }
+
+  const sectionQuestions = allExamQuestions.filter(
+    (q) => q.section === startedSection,
+  );
 
   return (
     <div>
       <PearsonVueExam
         guaranteeModeActive={guaranteeMode}
         onToggleGuarantee={setGuaranteeMode}
+        questions={sectionQuestions.length > 0 ? sectionQuestions : undefined}
         onIncorrectForAi={(prompt) => {
           generate(prompt);
         }}
@@ -355,6 +415,10 @@ export default function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/flashcards" element={<FlashcardReview />} />
                 <Route path="/ai" element={<AiPage />} />
+                <Route path="/lessons" element={<LessonsHome />} />
+                <Route path="/lessons/:id" element={<LessonReader />} />
+                <Route path="/practice" element={<QuestionBank />} />
+                <Route path="/practice/session" element={<QuestionPlayer />} />
                 <Route path="/help" element={<Help />} />
                 <Route path="/settings" element={<Settings />} />
               </Routes>

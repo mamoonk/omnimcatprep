@@ -35,6 +35,8 @@ export interface Flashcard {
   lapses?: number;
   state: FlashcardState;
   dueDate: number;
+  contentCategoryId?: string;
+  section?: McatSection;
 }
 
 export interface ExamQuestion {

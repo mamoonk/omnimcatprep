@@ -11,7 +11,23 @@ import { RxDBQueryBuilderPlugin } from "rxdb/plugins/query-builder";
 import { RxDBUpdatePlugin } from "rxdb/plugins/update";
 import { questionLogSchema } from "./collections/questionLogs.schema";
 import { flashcardSchema } from "./collections/flashcards.schema";
+import { contentCategorySchema } from "./collections/content-categories.schema";
+import { questionSchema } from "./collections/questions.schema";
+import { passageSchema } from "./collections/passages.schema";
+import { lessonSchema } from "./collections/lessons.schema";
+import { testSessionSchema } from "./collections/test-sessions.schema";
+import { attemptSchema } from "./collections/attempts.schema";
 import type { QuestionLog, Flashcard } from "../types";
+import type { ContentCategory } from "../types/aamc-taxonomy";
+import type { Question } from "../types/question";
+import type { Passage } from "../types/passage";
+import type { Lesson } from "../types/lesson";
+import type { TestSession } from "../types/test";
+import type { Attempt } from "../types/attempt";
+import { AAMC_TAXONOMY } from "../data/aamc-taxonomy";
+import { ALL_QUESTIONS } from "../data/questions";
+import { CARS_PASSAGES } from "../data/passages/cars";
+import { ALL_LESSONS } from "../data/lessons";
 
 if (import.meta.env.DEV && import.meta.env.MODE !== "test") {
   addRxPlugin(RxDBDevModePlugin);
@@ -19,10 +35,16 @@ if (import.meta.env.DEV && import.meta.env.MODE !== "test") {
 addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBUpdatePlugin);
 
-export type McatCollections = {
+interface McatCollections {
   question_logs: RxCollection<QuestionLog>;
   flashcards: RxCollection<Flashcard>;
-};
+  content_categories: RxCollection<ContentCategory>;
+  questions: RxCollection<Question>;
+  passages: RxCollection<Passage>;
+  lessons: RxCollection<Lesson>;
+  test_sessions: RxCollection<TestSession>;
+  attempts: RxCollection<Attempt>;
+}
 
 export type McatDatabase = RxDatabase<McatCollections>;
 
@@ -49,14 +71,39 @@ async function createDatabase(): Promise<McatDatabase> {
   await db.addCollections({
     question_logs: { schema: questionLogSchema },
     flashcards: { schema: flashcardSchema },
+    content_categories: { schema: contentCategorySchema },
+    questions: { schema: questionSchema },
+    passages: { schema: passageSchema },
+    lessons: { schema: lessonSchema },
+    test_sessions: { schema: testSessionSchema },
+    attempts: { schema: attemptSchema },
   });
 
   return db;
 }
 
 export async function seedMockData(db: McatDatabase): Promise<void> {
-  const existing = await db.question_logs.find().limit(1).exec();
-  if (existing.length > 0) return;
+  const existingQuestions = await db.questions.find().limit(1).exec();
+  if (existingQuestions.length > 0) return;
+
+  await db.content_categories.bulkInsert(
+    AAMC_TAXONOMY.map((cat) => ({
+      ...cat,
+      parentId: cat.parentId ?? null,
+    })),
+  );
+
+  await db.passages.bulkInsert(
+    CARS_PASSAGES.map((p) => ({ ...p })),
+  );
+
+  await db.questions.bulkInsert(
+    ALL_QUESTIONS.map((q) => ({ ...q })),
+  );
+
+  await db.lessons.bulkInsert(
+    ALL_LESSONS.map((l) => ({ ...l })),
+  );
 
   const now = Date.now();
   await db.question_logs.bulkInsert([

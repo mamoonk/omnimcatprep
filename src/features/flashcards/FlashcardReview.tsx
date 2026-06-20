@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getDatabase } from "../../database";
 import {
+  countFlashcardsByType,
   countFlashcardsInDeck,
   ensureFlashcardDeck,
   fetchDueFlashcards,
@@ -36,6 +37,9 @@ const RATING_STYLES: Record<ReviewRating, string> = {
 export function FlashcardReview() {
   const [sessionQueue, setSessionQueue] = useState<Flashcard[]>([]);
   const [totalInDeck, setTotalInDeck] = useState(0);
+  const [regularCount, setRegularCount] = useState(0);
+  const [practiceCount, setPracticeCount] = useState(0);
+  const [duePracticeCount, setDuePracticeCount] = useState(0);
   const [reviewedCount, setReviewedCount] = useState(0);
   const [showBack, setShowBack] = useState(false);
   const [initialSessionSize, setInitialSessionSize] = useState(0);
@@ -45,9 +49,13 @@ export function FlashcardReview() {
     await ensureFlashcardDeck(db);
     const due = await fetchDueFlashcards(db);
     const total = await countFlashcardsInDeck(db);
+    const byType = await countFlashcardsByType(db);
     setSessionQueue(due);
     setInitialSessionSize(due.length);
     setTotalInDeck(total);
+    setRegularCount(byType.regular);
+    setPracticeCount(byType.practice);
+    setDuePracticeCount(byType.duePractice);
     setReviewedCount(0);
     setShowBack(false);
   }, []);
@@ -92,7 +100,20 @@ export function FlashcardReview() {
           ) : (
             <p className="text-slate-600">No flashcards due right now. Great work!</p>
           )}
-          <p className="mt-3 text-sm text-slate-400">{totalInDeck} cards in your deck</p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-400">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {regularCount} regular
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {practiceCount} from practice
+            </span>
+            {duePracticeCount > 0 && (
+              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-amber-700">
+                {duePracticeCount} practice due
+              </span>
+            )}
+          </div>
+          <p className="mt-3 text-sm text-slate-400">{totalInDeck} total cards in your deck</p>
           <Button className="mt-6" onClick={() => void startSession()}>
             Check for due cards
           </Button>
@@ -117,6 +138,18 @@ export function FlashcardReview() {
             Card {cardNumber} of {initialSessionSize || remaining}
           </span>
           <span>{remaining} remaining</span>
+        </div>
+
+        <div className="mb-3 flex items-center gap-2">
+          {current.id.startsWith("qcard-") ? (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+              Practice question
+            </span>
+          ) : (
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+              Flashcard
+            </span>
+          )}
         </div>
 
         <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-slate-100">

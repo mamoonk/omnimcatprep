@@ -18,6 +18,8 @@ export const flashcardSchema: RxJsonSchema<Flashcard> = {
     lapses: { type: "integer" },
     state: { type: "integer" },
     dueDate: { type: "integer" },
+    contentCategoryId: { type: "string" },
+    section: { type: "string" },
   },
   required: ["id", "front", "back", "stability", "difficulty", "state", "dueDate"],
 };

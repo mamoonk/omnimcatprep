@@ -9,6 +9,7 @@ import { ExamNotepad } from "./ExamNotepad";
 import { MOCK_EXAM_QUESTIONS } from "./mockQuestions";
 
 import { useExamState } from "./useExamState";
+import type { ExamQuestion } from "../../types";
 
 import { VUE_STYLES } from "./styles";
 
@@ -28,6 +29,8 @@ interface PearsonVueExamProps {
   onToggleGuarantee: (active: boolean) => void;
 
   onIncorrectForAi?: (prompt: string) => void;
+
+  questions?: ExamQuestion[];
 
 }
 
@@ -53,11 +56,15 @@ export function PearsonVueExam({
 
   onIncorrectForAi,
 
+  questions,
+
 }: PearsonVueExamProps) {
+
+  const examQuestions = questions ?? MOCK_EXAM_QUESTIONS;
 
   const { state, dispatch, currentQuestion, logAttempt, totalQuestions } =
 
-    useExamState(MOCK_EXAM_QUESTIONS);
+    useExamState(examQuestions);
 
   const [notepad, setNotepad] = useState("");
 

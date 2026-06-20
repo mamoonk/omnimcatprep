@@ -1,6 +1,8 @@
 import type { Flashcard, FlashcardState, McatSection, QuestionLog } from "../../types";
+import type { Attempt } from "../../types/attempt";
 import { countOverdueFlashcards } from "../flashcards/fsrs";
 import { ALL_SECTIONS, sectionLabel } from "./sectionLabels";
+import { ALL_QUESTIONS } from "../../data/questions";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -49,6 +51,14 @@ export interface AccuracyTrendPoint {
   cumulativeAccuracy: number;
 }
 
+export interface SkillStats {
+  skill: string;
+  label: string;
+  accuracy: number;
+  correct: number;
+  total: number;
+}
+
 export interface PracticeAnalytics {
   totalAttempts: number;
   correctCount: number;
@@ -66,6 +76,7 @@ export interface PracticeAnalytics {
   timeTrend: { index: number; seconds: number; section: McatSection }[];
   errorBreakdown: { type: string; label: string; count: number }[];
   sectionVolume: { section: McatSection; label: string; count: number }[];
+  skillBreakdown: SkillStats[];
 }
 
 const FLASHCARD_STATE_LABELS: Record<FlashcardState, string> = {
@@ -90,6 +101,25 @@ export interface FlashcardAnalytics {
   avgStability: number;
   avgDifficulty: number;
   byState: { state: FlashcardState; label: string; count: number }[];
+}
+
+/**
+ * Converts Attempt[] to a QuestionLog-compatible array so analytics
+ * functions can process both data sources uniformly.
+ */
+export function attemptsToLogs(attempts: Attempt[]): QuestionLog[] {
+  return attempts.map((a) => ({
+    id: a.id,
+    questionId: a.questionId,
+    section: a.section,
+    isCorrect: a.isCorrect,
+    selectedAnswer: a.selectedOption ?? undefined,
+    timeSpentSeconds: Math.round(a.timeMs / 1000),
+    timestamp: a.timestamp,
+    complianceLogged: a.complianceLogged,
+    mistakeAnalysis: a.mistakeAnalysis,
+    errorType: a.isCorrect ? undefined : ("content_gap" as const),
+  }));
 }
 
 export function computePracticeAnalytics(
@@ -142,6 +172,7 @@ export function computePracticeAnalytics(
     })),
     errorBreakdown: buildErrorBreakdown(logs),
     sectionVolume: buildSectionVolume(logs),
+    skillBreakdown: buildSkillBreakdown(logs),
   };
 }
 
@@ -276,6 +307,41 @@ export function buildSectionVolume(logs: QuestionLog[]): {
   })).filter((entry) => entry.count > 0);
 }
 
+const SKILL_LABELS: Record<string, string> = {
+  knowledge: "Knowledge",
+  "scientific-reasoning": "Scientific Reasoning",
+  "reasoning-about-design": "Reasoning About Design",
+  "data-based-statistical-reasoning": "Data & Statistical Reasoning",
+  "foundations-comprehension": "Foundations of Comprehension",
+  "reasoning-within-text": "Reasoning Within Text",
+  "reasoning-beyond-text": "Reasoning Beyond Text",
+};
+
+export function buildSkillBreakdown(logs: QuestionLog[]): SkillStats[] {
+  const questionMap = new Map(ALL_QUESTIONS.map((q) => [q.id, q]));
+  const bySkill = new Map<string, { correct: number; total: number }>();
+
+  for (const log of logs) {
+    const question = questionMap.get(log.questionId);
+    if (!question) continue;
+    const skill = question.skill;
+    const entry = bySkill.get(skill) ?? { correct: 0, total: 0 };
+    entry.total += 1;
+    if (log.isCorrect) entry.correct += 1;
+    bySkill.set(skill, entry);
+  }
+
+  return Array.from(bySkill.entries())
+    .map(([skill, { correct, total }]) => ({
+      skill,
+      label: SKILL_LABELS[skill] ?? skill,
+      accuracy: total ? Math.round((correct / total) * 100) : 0,
+      correct,
+      total,
+    }))
+    .sort((a, b) => a.accuracy - b.accuracy);
+}
+
 export function computeFlashcardAnalytics(
   cards: Flashcard[],
   now: number = Date.now(),
@@ -319,6 +385,48 @@ export function computeFlashcardAnalytics(
     avgDifficulty,
     byState,
   };
+}
+
+export interface CategoryStats {
+  categoryId: string;
+  categoryName: string;
+  label: string;
+  accuracy: number;
+  correct: number;
+  total: number;
+  avgTimeMs: number;
+}
+
+export function computeCategoryAnalytics(
+  attempts: Attempt[],
+  getCategoryById: (id: string) => { name: string; section: string } | undefined,
+): CategoryStats[] {
+  const byCategory = new Map<string, Attempt[]>();
+  for (const a of attempts) {
+    const existing = byCategory.get(a.contentCategoryId) ?? [];
+    existing.push(a);
+    byCategory.set(a.contentCategoryId, existing);
+  }
+
+  return Array.from(byCategory.entries())
+    .map(([categoryId, catAttempts]) => {
+      const correct = catAttempts.filter((a) => a.isCorrect).length;
+      const total = catAttempts.length;
+      const cat = getCategoryById(categoryId);
+      const categoryName = cat?.name ?? categoryId;
+      const section = cat?.section ?? "";
+      const sectionPrefix = section ? `${sectionLabel(section as McatSection)} – ` : "";
+      return {
+        categoryId,
+        categoryName,
+        label: `${sectionPrefix}${categoryName}`,
+        accuracy: total ? Math.round((correct / total) * 100) : 0,
+        correct,
+        total,
+        avgTimeMs: total ? Math.round(catAttempts.reduce((s, a) => s + a.timeMs, 0) / total) : 0,
+      };
+    })
+    .sort((a, b) => b.total - a.total);
 }
 
 export const CHART_COLORS = [

@@ -46,13 +46,69 @@ export function Help() {
             Start on the <HelpLink to="/">Home</HelpLink> page to confirm the database is ready.
           </li>
           <li>
-            Open <HelpLink to="/exam">Exam</HelpLink> to begin a practice session.
+            Go to <HelpLink to="/practice">Practice</HelpLink> to filter questions by section,
+            category, difficulty, and format, then start a practice session.
+          </li>
+          <li>
+            Review content with <HelpLink to="/lessons">Lessons</HelpLink> organized by AAMC
+            content categories.
+          </li>
+          <li>
+            Open <HelpLink to="/exam">Exam</HelpLink> for a full-length Pearson VUE emulator.
           </li>
           <li>
             Check <HelpLink to="/dashboard">Dashboard</HelpLink> after answering questions to see
             your stats.
           </li>
         </ol>
+      </HelpSection>
+
+      <HelpSection title="Practice Questions" delay={80}>
+        <p>
+          The <HelpLink to="/practice">Practice</HelpLink> screen lets you build custom question
+          sets by filtering across the full AAMC content taxonomy.
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            <strong>Filters</strong> — Select a section, topic category, difficulty (easy/medium/hard),
+            and format (discrete or passage-based).
+          </li>
+          <li>
+            <strong>Modes</strong> — Tutor mode gives immediate feedback after each question; timed
+            mode shows results at the end of the set.
+          </li>
+          <li>
+            <strong>Session size</strong> — Up to 10 questions per session. After completing, you
+            see a summary with accuracy, average time, and a per-question breakdown.
+          </li>
+          <li>
+            <strong>Rationales</strong> — Every question includes a detailed explanation of why each
+            answer is correct or incorrect.
+          </li>
+        </ul>
+      </HelpSection>
+
+      <HelpSection title="Content Review (Lessons)" delay={110}>
+        <p>
+          <HelpLink to="/lessons">Lessons</HelpLink> provide structured content review aligned to
+          the AAMC content categories.
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            Lessons are organized by MCAT section (Bio/Biochem, Chem/Phys, Psych/Soc, CARS) and
+            further grouped by foundation and category.
+          </li>
+          <li>
+            Mark lessons as complete to track your content review progress.
+          </li>
+          <li>
+            Each lesson page includes a <strong>Practice this topic</strong> link to jump
+            straight to filtered practice questions for that category.
+          </li>
+          <li>
+            Navigate between lessons using the previous/next links at the bottom of each page.
+          </li>
+        </ul>
       </HelpSection>
 
       <HelpSection title="Exam practice (Pearson VUE emulator)" delay={100}>
@@ -264,6 +320,18 @@ export function Help() {
                 <HelpLink to="/flashcards">Flashcards</HelpLink>
               </td>
               <td className="py-2">FSRS review queue</td>
+            </tr>
+            <tr>
+              <td className="py-2 pr-4">
+                <HelpLink to="/practice">Practice</HelpLink>
+              </td>
+              <td className="py-2">Custom question sets</td>
+            </tr>
+            <tr>
+              <td className="py-2 pr-4">
+                <HelpLink to="/lessons">Lessons</HelpLink>
+              </td>
+              <td className="py-2">AAMC content review</td>
             </tr>
             <tr>
               <td className="py-2 pr-4">

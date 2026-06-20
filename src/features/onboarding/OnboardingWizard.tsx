@@ -8,10 +8,10 @@ const STEPS = [
   {
     title: "Welcome to MCAT Prep",
     subtitle:
-      "This app runs entirely on your device. Practice exams, flashcards, and analytics all work offline.",
+      "This app runs entirely on your device. Lessons, practice exams, flashcards, and analytics all work offline.",
     demo: (
       <div className="flex justify-center gap-3 py-4">
-        {["📝", "🃏", "📊", "🤖"].map((icon) => (
+        {["📚", "📝", "🃏", "📊", "🤖"].map((icon) => (
           <span
             key={icon}
             className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 text-2xl shadow-sm"
@@ -24,12 +24,44 @@ const STEPS = [
     tip: "Use the navigation bar to jump between features anytime.",
   },
   {
-    title: "Step 1 — Start a practice exam",
+    title: "Step 1 — Learn with structured lessons",
     subtitle:
-      "Click Exam in the nav bar (or Start Practice on Home). You'll get a Pearson VUE-style split screen: passage on the left, question on the right.",
+      "Open Lessons to browse content organized by MCAT section and AAMC category. Mark lessons complete and jump straight into targeted practice.",
+    demo: (
+      <div className="space-y-2 rounded-xl border border-slate-200 p-3 text-xs">
+        <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
+          <span className="text-emerald-600">✓</span>
+          <span className="font-medium text-slate-700">Amino Acids & Protein Structure</span>
+        </div>
+        <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
+          <span className="text-slate-300">○</span>
+          <span className="font-medium text-slate-700">Enzyme Kinetics</span>
+        </div>
+      </div>
+    ),
+    tip: "Finishing a lesson reveals a `Practice this topic` link that auto-starts a custom set.",
+  },
+  {
+    title: "Step 2 — Build custom practice sets",
+    subtitle:
+      "Go to Practice to filter by section, content category, difficulty, and format. Choose how many questions you want and study in tutor or timed mode.",
+    demo: (
+      <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 p-3 text-xs">
+        <div className="rounded bg-slate-50 px-2 py-1.5">Section</div>
+        <div className="rounded bg-slate-50 px-2 py-1.5">Category</div>
+        <div className="rounded bg-slate-50 px-2 py-1.5">Difficulty</div>
+        <div className="rounded bg-slate-50 px-2 py-1.5">10 questions</div>
+      </div>
+    ),
+    tip: "Practice sets automatically spread questions across categories for balanced coverage.",
+  },
+  {
+    title: "Step 3 — Take a section exam",
+    subtitle:
+      "Click Exam to choose a section. You'll get a Pearson VUE-style split screen with a timer: passage on the left, question on the right.",
     demo: (
       <div className="overflow-hidden rounded-xl border border-slate-200 text-xs">
-        <div className="bg-[#003366] px-3 py-1.5 text-white">MCAT Practice · 94:32</div>
+        <div className="bg-[#003366] px-3 py-1.5 text-white">Bio/Biochem · 94:32</div>
         <div className="flex h-28">
           <div className="w-1/2 border-r border-slate-200 bg-white p-2 text-slate-500">
             Passage text with highlightable content…
@@ -47,30 +79,16 @@ const STEPS = [
     tip: "Select an answer, cross out distractors, flag questions, and use the scratchpad at the bottom.",
   },
   {
-    title: "Step 2 — Submit answers & exit early",
+    title: "Step 4 — Review flashcards",
     subtitle:
-      "Click Submit Answer to record your response and move to the next question. You can exit anytime via End Exam in the header — submitted answers are saved.",
-    demo: (
-      <div className="space-y-2 py-2">
-        <div className="flex items-center justify-between rounded-lg bg-slate-100 px-3 py-2 text-sm">
-          <span>Question 2 of 2</span>
-          <span className="rounded bg-[#003366] px-3 py-1 text-xs text-white">Submit Answer</span>
-        </div>
-        <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          <span>Need to stop?</span>
-          <span className="rounded border border-red-300 px-2 py-0.5 text-xs">End Exam</span>
-        </div>
-      </div>
-    ),
-    tip: "When you finish all questions, you'll see a Section Complete screen.",
-  },
-  {
-    title: "Step 3 — Review flashcards",
-    subtitle:
-      "Open Flashcards to review due cards. Tap Show Answer, then rate yourself: Again, Hard, Good, or Easy. The FSRS algorithm schedules your next review.",
+      "Open Flashcards to review due cards. Every practice answer also creates a qcard-* flashcard so you can revisit missed concepts on a spaced schedule.",
     demo: (
       <div className="rounded-xl bg-gradient-to-br from-slate-50 to-blue-50/50 p-4 text-center">
         <p className="text-sm text-slate-600">What is the ··· constant?</p>
+        <div className="mt-3 flex justify-center gap-2 text-xs">
+          <span className="rounded-lg border bg-white px-2 py-1.5">Practice question</span>
+          <span className="rounded-lg border bg-white px-2 py-1.5">Flashcard</span>
+        </div>
         <div className="mt-3 grid grid-cols-4 gap-1 text-xs">
           {["Again", "Hard", "Good", "Easy"].map((l) => (
             <span key={l} className="rounded-lg border bg-white py-1.5">
@@ -83,7 +101,7 @@ const STEPS = [
     tip: "If more than 200 cards are overdue, new exam practice is blocked until you catch up.",
   },
   {
-    title: "Step 4 — Guarantee Mode (optional)",
+    title: "Step 5 — Guarantee Mode (optional)",
     subtitle:
       "Enable Guarantee Mode in the exam header before practicing. Wrong answers trigger a mandatory mistake analysis with three fields before you can continue.",
     demo: (
@@ -97,24 +115,31 @@ const STEPS = [
     tip: "Fill in Information Gap, Distractor Trap, and Preventive Rule for every miss.",
   },
   {
-    title: "Step 5 — Track your progress",
+    title: "Step 6 — Track your progress",
     subtitle:
-      "The Dashboard shows accuracy by section, average time per question, and trends — all computed locally from your question logs.",
+      "The Dashboard shows accuracy by section, skill type, and AAMC content category, plus daily activity, trends, and average time per question.",
     demo: (
-      <div className="flex items-end justify-center gap-2 py-2">
-        {[40, 70, 55, 85].map((h, i) => (
-          <div
-            key={i}
-            className="w-8 rounded-t-md bg-gradient-to-t from-[#003366] to-[#3399ff]"
-            style={{ height: `${h}px` }}
-          />
-        ))}
+      <div className="space-y-2 py-2">
+        <div className="flex items-end justify-center gap-2">
+          {[40, 70, 55, 85].map((h, i) => (
+            <div
+              key={i}
+              className="w-6 rounded-t-md bg-gradient-to-t from-[#003366] to-[#3399ff]"
+              style={{ height: `${h}px` }}
+            />
+          ))}
+        </div>
+        <div className="flex flex-wrap justify-center gap-1 text-xs text-slate-500">
+          <span className="rounded-full bg-slate-100 px-2 py-0.5">Sections</span>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5">Skills</span>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5">Categories</span>
+        </div>
       </div>
     ),
-    tip: "Complete at least one exam session to populate your dashboard charts.",
+    tip: "The weakest section and bottom categories are highlighted so you know where to focus.",
   },
   {
-    title: "Step 6 — AI Tutor & PDF import",
+    title: "Step 7 — AI Tutor & PDF import",
     subtitle:
       "Load the local AI model on the AI Tutor page for offline explanations. Upload a PDF to auto-generate Cloze flashcards from your study materials.",
     demo: (
@@ -127,7 +152,7 @@ const STEPS = [
   {
     title: "You're ready!",
     subtitle:
-      "Start with a practice exam or review flashcards. Revisit Help anytime for the full guide.",
+      "Start with a lesson, build a practice set, or take an exam. Revisit Help anytime for the full guide.",
     demo: <div className="animate-float py-4 text-center text-4xl">🎓</div>,
     tip: "Re-enable this tour anytime in Settings.",
   },

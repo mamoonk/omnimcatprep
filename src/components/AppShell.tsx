@@ -4,6 +4,8 @@ const NAV = [
   { to: "/", label: "Home" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/exam", label: "Exam" },
+  { to: "/practice", label: "Practice" },
+  { to: "/lessons", label: "Lessons" },
   { to: "/flashcards", label: "Flashcards" },
   { to: "/ai", label: "AI Tutor" },
   { to: "/help", label: "Help" },

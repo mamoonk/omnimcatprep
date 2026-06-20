@@ -73,3 +73,27 @@ export async function fetchDueFlashcards(db: McatDatabase): Promise<Flashcard[]>
 export async function countFlashcardsInDeck(db: McatDatabase): Promise<number> {
   return db.flashcards.count().exec();
 }
+
+function isPracticeCard(id: string): boolean {
+  return id.startsWith("qcard-");
+}
+
+export async function countFlashcardsByType(
+  db: McatDatabase,
+): Promise<{ regular: number; practice: number; duePractice: number }> {
+  const cards = await db.flashcards.find().exec();
+  const now = Date.now();
+  let regular = 0;
+  let practice = 0;
+  let duePractice = 0;
+  for (const card of cards) {
+    const c = card.toJSON();
+    if (isPracticeCard(c.id)) {
+      practice += 1;
+      if (c.dueDate <= now) duePractice += 1;
+    } else {
+      regular += 1;
+    }
+  }
+  return { regular, practice, duePractice };
+}
