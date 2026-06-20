@@ -17,6 +17,23 @@ export const AI_PROVIDERS: AiProviderDefinition[] = [
     })),
   },
   {
+    id: "pollinations",
+    label: "Pollinations",
+    description: "Free, no-signup OpenAI-compatible chat API. Works in the browser without an API key.",
+    mode: "online",
+    requiresCredential: false,
+    allowCustomModel: true,
+    customModelHint: "openai",
+    models: [
+      { id: "openai", label: "OpenAI GPT-4o Mini", note: "Default" },
+      { id: "openai-large", label: "OpenAI GPT-4o" },
+      { id: "qwen-coder", label: "Qwen Coder" },
+      { id: "llama", label: "Llama" },
+      { id: "mistral", label: "Mistral" },
+      { id: "deepseek-r1", label: "DeepSeek R1" },
+    ],
+  },
+  {
     id: "openai",
     label: "OpenAI",
     description: "Cloud models via the OpenAI API.",
@@ -99,7 +116,7 @@ export const AI_PROVIDERS: AiProviderDefinition[] = [
   },
 ];
 
-export const DEFAULT_PROVIDER_ID: ProviderId = "local";
+export const DEFAULT_PROVIDER_ID: ProviderId = "pollinations";
 
 export function getProvider(id: ProviderId): AiProviderDefinition {
   const provider = AI_PROVIDERS.find((p) => p.id === id);

@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { DEFAULT_MODEL_ID } from "./modelCatalog";
 import { getAiSelection, setAiSelection } from "./aiPreferences";
 
 describe("ai preferences", () => {
@@ -7,10 +6,10 @@ describe("ai preferences", () => {
     localStorage.clear();
   });
 
-  it("defaults to local provider", () => {
+  it("defaults to pollinations provider", () => {
     expect(getAiSelection()).toEqual({
-      providerId: "local",
-      modelId: DEFAULT_MODEL_ID,
+      providerId: "pollinations",
+      modelId: "openai",
     });
   });
 

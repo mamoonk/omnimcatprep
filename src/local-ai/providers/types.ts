@@ -1,5 +1,6 @@
 export type ProviderId =
   | "local"
+  | "pollinations"
   | "openai"
   | "anthropic"
   | "google"

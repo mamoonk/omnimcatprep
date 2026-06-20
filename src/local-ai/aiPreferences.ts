@@ -10,7 +10,7 @@ const SELECTION_KEY = "mcatprep_ai_selection";
 const LEGACY_MODEL_KEY = "mcatprep_ai_model_id";
 
 function isProviderId(value: string): value is ProviderId {
-  return ["local", "openai", "anthropic", "google", "groq", "openrouter"].includes(value);
+  return ["local", "pollinations", "openai", "anthropic", "google", "groq", "openrouter"].includes(value);
 }
 
 function defaultSelectionForProvider(providerId: ProviderId): AiSelection {

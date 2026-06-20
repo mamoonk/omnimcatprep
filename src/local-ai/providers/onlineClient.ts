@@ -16,19 +16,22 @@ async function readErrorMessage(response: Response): Promise<string> {
 
 async function openAiCompatibleChat(
   url: string,
-  apiKey: string,
+  apiKey: string | null,
   model: string,
   prompt: string,
   maxTokens: number,
   extraHeaders?: Record<string, string>,
 ): Promise<string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...extraHeaders,
+  };
+  if (apiKey) {
+    headers.Authorization = `Bearer ${apiKey}`;
+  }
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      ...extraHeaders,
-    },
+    headers,
     body: JSON.stringify({
       model,
       messages: [{ role: "user", content: prompt }],
@@ -126,6 +129,14 @@ export async function generateWithOnlineProvider(
   const { prompt } = options;
 
   switch (selection.providerId as ProviderId) {
+    case "pollinations":
+      return openAiCompatibleChat(
+        "https://text.pollinations.ai/openai",
+        apiKey,
+        modelId,
+        prompt,
+        maxTokens,
+      );
     case "openai":
       return openAiCompatibleChat(
         "https://api.openai.com/v1/chat/completions",
